@@ -1,8 +1,8 @@
 var http = require('http');
 var ts = new Date().getTime();
 var parser = require("node-xml2json");
-var  _ = require("underscore");
-
+var  _ = require("underscore")
+, async = require('async');
 
 function wget (host, path, https, callback) {
   var options = {
@@ -58,7 +58,46 @@ wget('www.nasdaq.com', '/aspx/NLS/NLSHandler.ashx?msg=MIN&Symbol=UVXY&QESymbol=U
 // http://chartapi.finance.yahoo.com/instrument/1.0/GOOG/chartdata;type=quote;range=1d/csv
  */
 
+/*
 wget('chartapi.finance.yahoo.com', '/instrument/1.0/UVXY/chartdata;type=quote;range=5d/csv', false, function (atom) {
   console.log(_.last(_.first(atom.split('\n'),20),7));
+  -- range
 });
 
+ [ 'labels:1363613400,1363699800,1363786200,1363872600,1363959000',
+ 'values:Timestamp,close,high,low,open,volume',
+ 'close:7.8200,9.6520',
+ 'high:7.8300,9.7000',
+ 'low:7.8000,9.5900',
+ 'open:7.8200,9.6510',
+ 'volume:0,4404400' ]
+
+
+ */
+
+
+var interval = 5 * (60*1000); // 5 minutes
+
+wget('www.nasdaq.com', '/aspx/NLS/NLSHandler.ashx?msg=MIN&Symbol=UVXY&QESymbol=UVXY&ts='+ts, false, function (atom) {
+  out = _.map(_.groupBy(parser.parser(atom).documentelement.min, function(item){ return Math.ceil(item.time / interval); }), function(item) {
+    return( {"row": Math.ceil(item[0].time / interval),
+              "high":  _.max(item, function(item){ return item.price; }).price,
+              "low":  _.min(item, function(item){ return item.price; }).price,
+              "volume" :  _.reduceRight(item, function(memo, arr){ return memo + arr.shares; }, 0)
+            });
+  });
+//  console.log(out);
+});
+
+wget('chartapi.finance.yahoo.com', '/instrument/1.0/UVXY/chartdata;type=quote;range=5d/csv', false, function (atom) {
+  var data = (_.last(_.first(atom.split('\n'),20),7));
+  var summary = {};
+
+  summary["close"] = data[2].split(':')[1].split(',');
+  summary["high"] = data[3].split(':')[1].split(',');
+  summary["low"] = data[4].split(':')[1].split(',');
+  summary["open"] = data[5].split(':')[1].split(',');
+
+//  console.log(summary);
+
+});
