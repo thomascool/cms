@@ -1,8 +1,12 @@
-var http = require('http');
-var ts = new Date().getTime();
-var parser = require("node-xml2json");
-var  _ = require("underscore")
-, async = require('async');
+var http = require('http')
+, ts = new Date().getTime()
+, parser = require("node-xml2json")
+,  _ = require("underscore")
+, async = require('async')
+, MongoClient = require('mongodb').MongoClient
+, moment = require('moment');
+
+var _conn_mongo = 'mongodb://127.0.0.1:27017/test';
 
 function wget (host, path, https, callback) {
   var options = {
@@ -72,22 +76,43 @@ wget('chartapi.finance.yahoo.com', '/instrument/1.0/UVXY/chartdata;type=quote;ra
  'open:7.8200,9.6510',
  'volume:0,4404400' ]
 
+ db.symbolList.insert({ 'segment':1, 'symbol':['UVXY','SVXY','TVIX','XIV'] } )
 
  */
 
 
-var interval = 5 * (60*1000); // 5 minutes
+MongoClient.connect(_conn_mongo, function(err, db) {
+  if(err) throw err;
 
-wget('www.nasdaq.com', '/aspx/NLS/NLSHandler.ashx?msg=MIN&Symbol=UVXY&QESymbol=UVXY&ts='+ts, false, function (atom) {
-  out = _.map(_.groupBy(parser.parser(atom).documentelement.min, function(item){ return Math.ceil(item.time / interval); }), function(item) {
-    return( {"row": Math.ceil(item[0].time / interval),
-              "high":  _.max(item, function(item){ return item.price; }).price,
-              "low":  _.min(item, function(item){ return item.price; }).price,
-              "volume" :  _.reduceRight(item, function(memo, arr){ return memo + arr.shares; }, 0)
-            });
+  db.collection('symbolList').find().toArray(function(err, settings) {
+    async.mapSeries(settings[0].symbol, function(ticksymbol, callback) {
+      var interval = settings[0].segment * (60*1000); // 5 minutes
+
+      wget('www.nasdaq.com', '/aspx/NLS/NLSHandler.ashx?msg=MIN&Symbol='+ticksymbol+'&QESymbol='+ticksymbol+'&ts='+ts, false, function (atom) {
+        out = _.map(_.groupBy(parser.parser(atom).documentelement.min, function(item){ return Math.ceil(item.time / interval); }), function(item) {
+          return( {"row": Math.ceil(item[0].time / interval),
+            "time":  _.max(item, function(item){ return item.time; }).time,
+            "high":  _.max(item, function(item){ return item.price; }).price,
+            "low":  _.min(item, function(item){ return item.price; }).price,
+            "volume" :  _.reduceRight(item, function(memo, arr){ return memo + arr.shares; }, 0)
+          });
+        });
+        var dataset = {"symbol":ticksymbol ,"timestamp": moment().format(), "interval": settings[0].segment, "datasize":out.length, "dataset":out};
+        var collection = db.collection(ticksymbol);
+        collection.insert(dataset, function(err, docs) {
+          callback(err, docs);
+        });
+      });
+
+    }, function(err, result){
+      if (err) console.log(err);
+      console.log(result);
+      db.close();
+    });
   });
-//  console.log(out);
+
 });
+
 
 wget('chartapi.finance.yahoo.com', '/instrument/1.0/UVXY/chartdata;type=quote;range=5d/csv', false, function (atom) {
   var data = (_.last(_.first(atom.split('\n'),20),7));
