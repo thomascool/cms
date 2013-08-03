@@ -7,11 +7,12 @@ lib-cov
 *.gz
 *.swp
 .DS_Store
+*.DS_Store
 *.dump
+*.csv
 
 env
 pids
-logs
 logfile
 results
 
@@ -22,5 +23,9 @@ npm-debug.log
 .DS_Store?
 .sass-cache
 .idea*
+.agignore
+dump.rdb
+jt_todo.txt
+directive-templates.js
 
-bundle
+tags

@@ -1,0 +1,11 @@
+{
+  "name": "cms",
+  "version": "0.0.1",
+  "dependencies": {
+    "node-xml2json": "latest",
+    "async": "latest",
+    "mongodb": "latest",
+    "moment": "latest",
+    "underscore": "latest"
+  }
+}
