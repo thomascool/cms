@@ -1,6 +1,11 @@
 {
   "name": "cms",
   "version": "0.0.1",
+  "private": true,
+  "engines": {
+    "node": "0.10.5",
+    "npm": "1.2.x"
+  },
   "dependencies": {
     "node-xml2json": "latest",
     "async": "latest",
