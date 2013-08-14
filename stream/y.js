@@ -1,6 +1,6 @@
 
-var math5 = new require('./mathlib').ema();
-var math10 = new require('./mathlib').sma();
+var math5 = require('./mathlib').ema(6);
+var math10 = require('./mathlib').sma(10);
 var Transform = require('stream').Transform
   , csv = require('csv-streamify')
     , JSONStream = require('JSONStream');
@@ -12,8 +12,8 @@ var Transform = require('stream').Transform
      // console.log('^%s',math5.get(6, JSON.stringify(data).length));
      // console.log('^%s',math10.get(10, JSON.stringify(data).length));
       var k = JSON.stringify(data).length;
-      data.push(math5.get(6, 10));
-      data.push(math10.get(10, 10));
+      data.push(math5.get(10));
+      data.push(math10.get(10));
 	      this.push(data);
 	        done();
     };
