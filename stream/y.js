@@ -1,11 +1,19 @@
+
+var math5 = new require('./mathlib').ema();
+var math10 = new require('./mathlib').sma();
 var Transform = require('stream').Transform
   , csv = require('csv-streamify')
     , JSONStream = require('JSONStream');
 
-    var csvToJson = csv({delimiter: '/', objectMode: true});
+    var csvToJson = csv({delimiter: ',', objectMode: true});
 
     var parser = new Transform({objectMode: true});
     parser._transform = function(data, encoding, done) {
+     // console.log('^%s',math5.get(6, JSON.stringify(data).length));
+     // console.log('^%s',math10.get(10, JSON.stringify(data).length));
+      var k = JSON.stringify(data).length;
+      data.push(math5.get(6, 10));
+      data.push(math10.get(10, 10));
 	      this.push(data);
 	        done();
     };
