@@ -1,4 +1,5 @@
 
+var moment = require('moment');
 var math5 = require('./mathlib').ema(6);
 var math10 = require('./mathlib').sma(10);
 var Transform = require('stream').Transform
@@ -11,9 +12,12 @@ var Transform = require('stream').Transform
     parser._transform = function(data, encoding, done) {
      // console.log('^%s',math5.get(6, JSON.stringify(data).length));
      // console.log('^%s',math10.get(10, JSON.stringify(data).length));
-      var k = JSON.stringify(data).length;
-      data.push(math5.get(10));
-      data.push(math10.get(10));
+   //   var k = JSON.stringify(data).length;
+   //   this.push(math5.get(k).toString());
+
+      //data.push(math5.get(k));
+      //data.push(math10.get(k));
+//        console.log( moment(data[0].split('-')).isValid() );
 	      this.push(data);
 	        done();
     };
