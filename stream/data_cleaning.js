@@ -4,11 +4,11 @@ var _ = require('underscore');
 var moment = require('moment');
 var Transform = require('stream').Transform
   , csv = require('csv-streamify')
-    , JSONStream = require('JSONStream');
+  , JSONStream = require('JSONStream');
 
-    var csvToJson = csv({delimiter: ',', objectMode: true});
+var csvToJson = csv({delimiter: ',', objectMode: true});
 
-    var parser = new Transform({objectMode: true});
+var parser = new Transform({objectMode: true});
 
     parser._transform = function(data, encoding, done) {
       var dataset = this;
