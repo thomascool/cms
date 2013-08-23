@@ -11,6 +11,7 @@
     "async": "latest",
     "mongodb": "latest",
     "moment": "latest",
-    "underscore": "latest"
+    "underscore": "latest",
+    "slice-file": "~0.2.1"
   }
 }
