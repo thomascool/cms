@@ -19,10 +19,10 @@ var Transform = require('stream').Transform
           , lastMoment = moment.utc(last[0])
           , dataJDAY = dataMoment.format("X")/aDay
           , lastJDAY = lastMoment.format("X")/aDay;
-
+console.log(dataJDAY);
         if ((dataJDAY - lastJDAY)>1 ) {
           _.each(_.range(1, (dataJDAY-lastJDAY) ), function(item) {
-            var tmp = lastMoment.seconds(aDay)
+            var tmp = lastMoment.seconds(item)
             if ((tmp.format("d") >= 1) && (tmp.format("d") <= 5)) {
               last[0] = tmp.format("YYYY-MM-DD");
               last[5] = "0"; // set the volumn to zero(0) to indicate this is a generated data
