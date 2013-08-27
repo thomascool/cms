@@ -100,7 +100,6 @@ buildTrainingData._transform = function(data, encoding, done) {
     var grpData = tranings[pattern.join("")];
     if (pattern[0] == 'm') {
       _.map(_.range(pattern[1]), function(item) {
-        console.log('m'+(data[2]-item));
         grpData['m'+(data[2]-item)].input.push(data);
       });
     }
@@ -110,10 +109,6 @@ buildTrainingData._transform = function(data, encoding, done) {
           grpData['m'+(data[2]-pattern[1]-item)].output.push(data);
       });
       if (!(_.isNull(lastData)) &&(lastData[2] != data[2])) {
-        console.log('!!!');
-        console.log(lastData);
-        console.log(data);
-        console.log('m'+(data[2]-pattern[1]-pattern[3]));
         if (grpData['m'+(data[2]-pattern[1]-pattern[3])])
           dataset.push(grpData['m'+(data[2]-pattern[1]-pattern[3])]);
       }
@@ -144,5 +139,4 @@ xs.sliceReverse(1)
 .pipe(jsonToStrings)
 .pipe(process.stdout);
 
-console.log(tranings);
 
