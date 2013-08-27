@@ -70,19 +70,20 @@ calucateTheClosing._transform = function(data, encoding, done) {
 
     var grpData = tranings[patternStr];
 
-    if (pattern[0] == 'y') {
-      if (!grpData['y' + transform[1]])
-        grpData['y' + transform[1]] = {input: [], output: []}
-    }
-    if (pattern[0] == 'm') {
-      if (!grpData['m' + transform[2]]) {
-        grpData['m' + transform[2]] = {input: [], output: []}
+    var ymwVal = function() {
+      if (pattern[0] == 'y') {
+        return transform[1];
+      } if (pattern[0] == 'm') {
+        return transform[2];
+      } if (pattern[0] == 'w') {
+        return transform[3];
       }
+    };
+
+    if (!grpData[pattern[0] + ymwVal()]) {
+      grpData[pattern[0] + ymwVal()] = new require('./mathlib').bayesItem(patternStr, pattern[0] + ymwVal());
     }
-    if (pattern[0] == 'w') {
-      if (!grpData['w' + transform[3]])
-        grpData['w' + transform[3]] = {input: [], output: []}
-    }
+
   });
 
   this.push(transform);
@@ -90,9 +91,9 @@ calucateTheClosing._transform = function(data, encoding, done) {
   done();
 };
 
-var buildTrainingData = new Transform({objectMode: true});
+var extractTrainingData = new Transform({objectMode: true});
 
-buildTrainingData._transform = function(data, encoding, done) {
+extractTrainingData._transform = function(data, encoding, done) {
   _.once(function() { lastData = data }); // inital the value for once only
   var dataset = this;
 
@@ -100,23 +101,35 @@ buildTrainingData._transform = function(data, encoding, done) {
     var grpData = tranings[pattern.join("")];
     if (pattern[0] == 'm') {
       _.map(_.range(pattern[1]), function(item) {
-        grpData['m'+(data[2]-item)].input.push(data);
+        grpData['m'+(data[2]-item)].pushInput(data);
       });
     }
     if (pattern[2] == 'm') {
       _.map(_.range(pattern[3]), function(item) {
         if (grpData['m'+(data[2]-pattern[1]-item)])
-          grpData['m'+(data[2]-pattern[1]-item)].output.push(data);
+          grpData['m'+(data[2]-pattern[1]-item)].pushOutput(data);
       });
       if (!(_.isNull(lastData)) &&(lastData[2] != data[2])) {
-        if (grpData['m'+(data[2]-pattern[1]-pattern[3])])
+        if (grpData['m'+(data[2]-pattern[1]-pattern[3])]) {
+          grpData['m'+(data[2]-pattern[1]-pattern[3])].findScale();
           dataset.push(grpData['m'+(data[2]-pattern[1]-pattern[3])]);
+        }
       }
     }
 
   });
 
   lastData = data;
+  done();
+};
+
+var getDataScale = new Transform({objectMode: true});
+
+getDataScale._transform = function(data, encoding, done) {
+
+  console.log('~~~');
+  console.log(data.getDistance());
+
   done();
 };
 
@@ -135,7 +148,8 @@ xs.sliceReverse(1)
 .pipe(csvToJson)
 .pipe(uniformData)
 .pipe(calucateTheClosing)
-.pipe(buildTrainingData)
+.pipe(extractTrainingData)
+.pipe(getDataScale)
 .pipe(jsonToStrings)
 .pipe(process.stdout);
 
