@@ -124,12 +124,30 @@ extractTrainingData._transform = function(data, encoding, done) {
 };
 
 var getDataScale = new Transform({objectMode: true});
+var maxUp = minDown = -10000;
+var maxDown = minUp = 10000;
 
 getDataScale._transform = function(data, encoding, done) {
 
   console.log('~~~');
   console.log(data.getDistance());
 
+  if (data.getDistance() > 0) {
+    if (data.getDistance() > maxUp) {
+      maxUp = data.getDistance();
+    }
+    if (data.getDistance() < minUp) {
+      minUp = data.getDistance();
+    }
+  } if (data.getDistance() < 0) {
+    if (data.getDistance() < maxDown) {
+      maxDown = data.getDistance();
+    }
+    if (data.getDistance() > minDown) {
+      minDown = data.getDistance();
+    }
+  }
+  this.push(data);
   done();
 };
 
