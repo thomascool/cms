@@ -1,4 +1,5 @@
 var _ = require('underscore');
+var async = require('async');
 
 exports.sma = function(interval) {
   var _cnt = 0
@@ -25,6 +26,14 @@ exports.bayesItem = function(pattern, name) {
   ,_input=[]
   ,_output=[];
 
+  var __row = 0
+  , __year = 1
+  , __month = 2
+  , __week = 3
+  , __date = 4
+  , __close = 5
+  , __volumn = 6;
+
   return {
     getPattern : function() {
       return _pattern;
@@ -36,14 +45,39 @@ exports.bayesItem = function(pattern, name) {
       _input.push(aLine);
       return _input;
     },
+    getInput : function() {
+      return _.map(_input, function(item) { return (item[__close] - _min) / (_max - _min); });
+    },
     pushOutput : function(aLine) {
       _output.push(aLine);
       return _output;
     },
-    findScale : function() {
-      _max = _.max(_input, function(item) { return item[5]});
-      _min = _.min(_input, function(item) { return item[5]});
-      _distance = _output.shift()[5] - _output.pop()[5];
+    getDataSet : function(maxUp, minDown, maxDown, minUp) {
+      var outputData = {};
+      if (_distance >= 0) {
+        outputData['up'] = (_distance - minUp) / (maxUp - minUp);
+      } else {
+        outputData['down'] = (_distance - maxDown) / (minDown - maxDown);
+      }
+      var inputData = _.reduce(_.range(_input.length), function(memo, num){
+        var tmp = {}
+        tmp['a' + num] = (_input[num][__close] - _min) / (_max - _min);
+        return memo = _.extend(memo, tmp);
+      }, {});
+
+      return {input: inputData, output: outputData};
+    },
+    setScale : function() {
+      _max = _.max(_input, function(item) { return item[__close]})[__close];
+      _min = _.min(_input, function(item) { return item[__close]})[__close];
+      _distance = _output.shift()[__close] - _output.pop()[__close];
+    },
+    getScale : function() {
+      return ({
+        max: _max,
+        min: _min,
+        distance: _distance
+      });
     },
     getBoth : function() {
       return({input: _input, output : _output});

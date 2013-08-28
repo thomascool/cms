@@ -1,7 +1,4 @@
 
-var last=null;
-var lastData=null;
-var lastUniformData=null;
 var yearNum = monthNum = weekNum = 1;
 var firstWeek;
 var _ = require('underscore');
@@ -11,11 +8,16 @@ var Transform = require('stream').Transform
   , JSONStream = require('JSONStream');
 var sf = require('slice-file');
 var xs = sf('/tmp/EEM.csv');
+var async = require('async');
+
+var brain = require('brain');
+
 
 var csvToJson = csv({delimiter: ',', objectMode: true});
 
 var uniformData = new Transform({objectMode: true});
 var lineNum = 0;
+var lastUniformData=null;
 
 uniformData._transform = function(data, encoding, done) {
   var dataset = this;
@@ -57,6 +59,7 @@ uniformData._transform = function(data, encoding, done) {
 };
 
 var calucateTheClosing = new Transform({objectMode: true});
+var last=null;
 
 calucateTheClosing._transform = function(data, encoding, done) {
   _.once(function() { last = data; tranings = {}; });
@@ -66,7 +69,13 @@ calucateTheClosing._transform = function(data, encoding, done) {
   _.map(patterns, function(pattern) {
     var patternStr = pattern.join("");
     if (!tranings[patternStr])
-      tranings[patternStr] = {};
+      tranings[patternStr] = {
+        maxUp : -10000,
+        minDown : -10000,
+        maxDown : 10000,
+        minUp : 10000,
+        net : new brain.NeuralNetwork()
+  };
 
     var grpData = tranings[patternStr];
 
@@ -92,6 +101,7 @@ calucateTheClosing._transform = function(data, encoding, done) {
 };
 
 var extractTrainingData = new Transform({objectMode: true});
+var lastData=null;
 
 extractTrainingData._transform = function(data, encoding, done) {
   _.once(function() { lastData = data }); // inital the value for once only
@@ -111,7 +121,7 @@ extractTrainingData._transform = function(data, encoding, done) {
       });
       if (!(_.isNull(lastData)) &&(lastData[2] != data[2])) {
         if (grpData['m'+(data[2]-pattern[1]-pattern[3])]) {
-          grpData['m'+(data[2]-pattern[1]-pattern[3])].findScale();
+          grpData['m'+(data[2]-pattern[1]-pattern[3])].setScale();
           dataset.push(grpData['m'+(data[2]-pattern[1]-pattern[3])]);
         }
       }
@@ -123,32 +133,78 @@ extractTrainingData._transform = function(data, encoding, done) {
   done();
 };
 
-var getDataScale = new Transform({objectMode: true});
-var maxUp = minDown = -10000;
-var maxDown = minUp = 10000;
+var setupDataScale = new Transform({objectMode: true});
 
-getDataScale._transform = function(data, encoding, done) {
-
-  console.log('~~~');
-  console.log(data.getDistance());
+setupDataScale._transform = function(data, encoding, done) {
 
   if (data.getDistance() > 0) {
-    if (data.getDistance() > maxUp) {
-      maxUp = data.getDistance();
+    if (data.getDistance() > tranings[data.getPattern()].maxUp) {
+      tranings[data.getPattern()].maxUp = data.getDistance();
     }
-    if (data.getDistance() < minUp) {
-      minUp = data.getDistance();
+    if (data.getDistance() < tranings[data.getPattern()].minUp) {
+      tranings[data.getPattern()].minUp = data.getDistance();
     }
   } if (data.getDistance() < 0) {
-    if (data.getDistance() < maxDown) {
-      maxDown = data.getDistance();
+    if (data.getDistance() < tranings[data.getPattern()].maxDown) {
+      tranings[data.getPattern()].maxDown = data.getDistance();
     }
-    if (data.getDistance() > minDown) {
-      minDown = data.getDistance();
+    if (data.getDistance() > tranings[data.getPattern()].minDown) {
+      tranings[data.getPattern()].minDown = data.getDistance();
     }
   }
-  this.push(data);
+
+//  this.push(data);
   done();
+};
+
+setupDataScale.on('end', function() {
+//  console.log(tranings);
+  console.log(tranings.m1m1.m1.getDataSet(
+  tranings.m1m1.maxUp,
+  tranings.m1m1.minDown,
+  tranings.m1m1.maxDown,
+  tranings.m1m1.minUp
+  ));
+/*
+  _.map(patterns, function(pattern) {
+    var grpData = tranings[pattern.join("")];
+
+    var patternStr = pattern.join("");
+    if (!tranings[patternStr])
+      tranings[patternStr] = {
+        maxUp : -10000,
+        minDown : -10000,
+        maxDown : 10000,
+        minUp : 10000,
+        net : new brain.NeuralNetwork()
+      };
+    grpData.net(
+    _.map();
+    );
+  });
+
+*/
+  });
+
+
+
+var setTrainingData = new Transform({objectMode: true});
+
+setTrainingData._transform = function(data, encoding, done) {
+  var dataset = {};
+
+  console.log('~~~~~~~XX');
+  console.log(data);
+
+  _.map(patterns, function(pattern) {
+    var patternStr = pattern.join("");
+    this.push([patternStr]);
+    done();
+  });
+
+  //  tranings[data.getPattern()].net.train(dataset);
+
+
 };
 
 var jsonToStrings = JSONStream.stringify(false);
@@ -167,8 +223,7 @@ xs.sliceReverse(1)
 .pipe(uniformData)
 .pipe(calucateTheClosing)
 .pipe(extractTrainingData)
-.pipe(getDataScale)
-.pipe(jsonToStrings)
+.pipe(setupDataScale)
+//.pipe(setTrainingData)
+//.pipe(jsonToStrings)
 .pipe(process.stdout);
-
-
