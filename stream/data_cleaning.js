@@ -89,8 +89,8 @@ calucateTheClosing._transform = function(data, encoding, done) {
       }
     };
 
-    if (!grpData[pattern[0] + ymwVal()]) {
-      grpData[pattern[0] + ymwVal()] = new require('./mathlib').bayesItem(patternStr, pattern[0] + ymwVal());
+    if (!grpData['_' + pattern[0] + ymwVal()]) {
+      grpData['_' + pattern[0] + ymwVal()] = new require('./mathlib').bayesItem(patternStr, '_' + pattern[0] + ymwVal());
     }
 
   });
@@ -111,18 +111,18 @@ extractTrainingData._transform = function(data, encoding, done) {
     var grpData = tranings[pattern.join("")];
     if (pattern[0] == 'm') {
       _.map(_.range(pattern[1]), function(item) {
-        grpData['m'+(data[2]-item)].pushInput(data);
+        grpData['_m'+(data[2]-item)].pushInput(data);
       });
     }
     if (pattern[2] == 'm') {
       _.map(_.range(pattern[3]), function(item) {
-        if (grpData['m'+(data[2]-pattern[1]-item)])
-          grpData['m'+(data[2]-pattern[1]-item)].pushOutput(data);
+        if (grpData['_m'+(data[2]-pattern[1]-item)])
+          grpData['_m'+(data[2]-pattern[1]-item)].pushOutput(data);
       });
       if (!(_.isNull(lastData)) &&(lastData[2] != data[2])) {
-        if (grpData['m'+(data[2]-pattern[1]-pattern[3])]) {
-          grpData['m'+(data[2]-pattern[1]-pattern[3])].setScale();
-          dataset.push(grpData['m'+(data[2]-pattern[1]-pattern[3])]);
+        if (grpData['_m'+(data[2]-pattern[1]-pattern[3])]) {
+          grpData['_m'+(data[2]-pattern[1]-pattern[3])].setScale();
+          dataset.push(grpData['_m'+(data[2]-pattern[1]-pattern[3])]);
         }
       }
     }
@@ -158,33 +158,26 @@ setupDataScale._transform = function(data, encoding, done) {
 };
 
 setupDataScale.on('end', function() {
-//  console.log(tranings);
-  console.log(tranings.m1m1.m1.getDataSet(
-  tranings.m1m1.maxUp,
-  tranings.m1m1.minDown,
-  tranings.m1m1.maxDown,
-  tranings.m1m1.minUp
-  ));
-/*
+
   _.map(patterns, function(pattern) {
     var grpData = tranings[pattern.join("")];
 
-    var patternStr = pattern.join("");
-    if (!tranings[patternStr])
-      tranings[patternStr] = {
-        maxUp : -10000,
-        minDown : -10000,
-        maxDown : 10000,
-        minUp : 10000,
-        net : new brain.NeuralNetwork()
-      };
-    grpData.net(
-    _.map();
+    var dataset = _.map(_.filter(_.keys(grpData), function(item) { return ((item.charAt(0) === '_') && (grpData[item].isCompleted())); }), function(objName) {
+      return grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp);
+    });
+
+
+    console.log(dataset);
+    console.log(
+    _.map(_.filter(_.keys(grpData), function(item) { return ((item.charAt(0) === '_') && (grpData[item].isCompleted())); }), function(objName) {
+      return grpData[objName].getDistance();
+    })
     );
+
+  //  grpData.net.train( dataset );
   });
 
-*/
-  });
+});
 
 
 

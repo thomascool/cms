@@ -24,7 +24,8 @@ exports.bayesItem = function(pattern, name) {
   ,_min = 1000.0
   ,_distance = 0
   ,_input=[]
-  ,_output=[];
+  ,_output=[]
+  ,_completed=false;
 
   var __row = 0
   , __year = 1
@@ -55,6 +56,10 @@ exports.bayesItem = function(pattern, name) {
     getDataSet : function(maxUp, minDown, maxDown, minUp) {
       var outputData = {};
       if (_distance >= 0) {
+        console.log('~~~~~~');
+        console.log(_distance);
+        console.log(minUp);
+        console.log(maxUp);
         outputData['up'] = (_distance - minUp) / (maxUp - minUp);
       } else {
         outputData['down'] = (_distance - maxDown) / (minDown - maxDown);
@@ -70,7 +75,9 @@ exports.bayesItem = function(pattern, name) {
     setScale : function() {
       _max = _.max(_input, function(item) { return item[__close]})[__close];
       _min = _.min(_input, function(item) { return item[__close]})[__close];
-      _distance = _output.shift()[__close] - _output.pop()[__close];
+      _distance = _output[_output.length-1][__close] - _output[0][__close];
+//      console.log('@@ %s', _distance);
+      _completed=true;
     },
     getScale : function() {
       return ({
@@ -84,6 +91,9 @@ exports.bayesItem = function(pattern, name) {
     },
     getDistance : function() {
       return _distance;
+    },
+    isCompleted : function() {
+      return _completed;
     }
   };
 };
