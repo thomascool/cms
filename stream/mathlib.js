@@ -76,7 +76,6 @@ exports.bayesItem = function(pattern, name) {
       _max = _.max(_input, function(item) { return item[__close]})[__close];
       _min = _.min(_input, function(item) { return item[__close]})[__close];
       _distance = _output[_output.length-1][__close] - _output[0][__close];
-//      console.log('@@ %s', _distance);
       _completed=true;
     },
     getScale : function() {

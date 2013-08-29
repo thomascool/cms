@@ -158,7 +158,7 @@ setupDataScale._transform = function(data, encoding, done) {
 };
 
 setupDataScale.on('end', function() {
-  
+
   _.map(patterns, function(pattern) {
     var grpData = tranings[pattern.join("")];
 
@@ -194,9 +194,6 @@ setTrainingData._transform = function(data, encoding, done) {
     this.push([patternStr]);
     done();
   });
-
-  //  tranings[data.getPattern()].net.train(dataset);
-
 
 };
 
