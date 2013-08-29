@@ -53,16 +53,16 @@ exports.bayesItem = function(pattern, name) {
       _output.push(aLine);
       return _output;
     },
+    getOutput : function() {
+      return _output;
+    },
     getDataSet : function(maxUp, minDown, maxDown, minUp) {
       var outputData = {};
       if (_distance >= 0) {
-        console.log('~~~~~~');
-        console.log(_distance);
-        console.log(minUp);
-        console.log(maxUp);
         outputData['up'] = (_distance - minUp) / (maxUp - minUp);
       } else {
-        outputData['down'] = (_distance - maxDown) / (minDown - maxDown);
+        var tmpVal = Math.abs(_distance - minDown) / (minDown - maxDown);
+        outputData['down'] = (tmpVal > 1) ? 1 : tmpVal;
       }
       var inputData = _.reduce(_.range(_input.length), function(memo, num){
         var tmp = {}

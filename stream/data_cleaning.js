@@ -158,23 +158,26 @@ setupDataScale._transform = function(data, encoding, done) {
 };
 
 setupDataScale.on('end', function() {
-
+  
   _.map(patterns, function(pattern) {
     var grpData = tranings[pattern.join("")];
 
+    // setup 95% of the maxDown array
+    var tmpArray = _.sortBy( _.map(_.filter(_.keys(grpData), function(item) { return ((item.charAt(0) === '_') && (grpData[item].getDistance() < 0) && (grpData[item].isCompleted())   ); }), function(objName) {
+      return grpData[objName].getDistance();
+    }) , function(num) {
+      return num;
+    });
+    grpData.maxDown = tmpArray[Math.floor(tmpArray.length * 0.05)];
+
+    // get all the dataset for training
     var dataset = _.map(_.filter(_.keys(grpData), function(item) { return ((item.charAt(0) === '_') && (grpData[item].isCompleted())); }), function(objName) {
       return grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp);
     });
 
-
     console.log(dataset);
-    console.log(
-    _.map(_.filter(_.keys(grpData), function(item) { return ((item.charAt(0) === '_') && (grpData[item].isCompleted())); }), function(objName) {
-      return grpData[objName].getDistance();
-    })
-    );
 
-  //  grpData.net.train( dataset );
+    grpData.net.train( dataset );
   });
 
 });
@@ -185,9 +188,6 @@ var setTrainingData = new Transform({objectMode: true});
 
 setTrainingData._transform = function(data, encoding, done) {
   var dataset = {};
-
-  console.log('~~~~~~~XX');
-  console.log(data);
 
   _.map(patterns, function(pattern) {
     var patternStr = pattern.join("");
