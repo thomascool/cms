@@ -5,11 +5,11 @@ var brain = require('brain')
 
 var dataset = []
 
-_.each(_.range(3), function(item) {
+_.each(_.range(300), function(item) {
   var out = {};
 
     out[ ((Math.random() > 0.5) ? 'black' : 'white') ] = Math.random();
-    inputVal = _.reduce(_.range(10), function(memo, num) {
+    inputVal = _.reduce(_.range(20), function(memo, num) {
       var aaa = {};
       aaa['a'+num] = Math.random();
       return  _.extend(memo, aaa);
@@ -31,16 +31,21 @@ Math.random()
 */
 net.train(dataset);
 
-var output = net.run({ a0: 0.10502143274061382,
-  a1: 0.9767115139402449,
-  a2: 0.7244157237000763,
-  a3: 0.7497721111867577,
-  a4: 0.29375994950532913,
-  a5: 0.039424927439540625,
-  a6: 0.5869070172775537,
-  a7: 0.006673179566860199,
-  a8: 0.38234652346000075,
-  a9: 0.47436763090081513});
+var output = net.run( _.reduce(_.range(20), function(memo, num) {
+  var aaa = {};
+  aaa['a'+num] = Math.random();
+  return  _.extend(memo, aaa);
+}, {}));
 
 console.log(output);
+
+
+console.log(
+net.run(
+_.reduce(_.range(20), function(memo, num) {
+  var aaa = {};
+  aaa['a'+num] = Math.random();
+  return  _.extend(memo, aaa);
+}, {})
+));
 

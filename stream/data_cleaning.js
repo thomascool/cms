@@ -74,6 +74,7 @@ calucateTheClosing._transform = function(data, encoding, done) {
         minDown : -10000,
         maxDown : 10000,
         minUp : 10000,
+        dataSetCnt : 0,
         net : new brain.NeuralNetwork()
   };
 
@@ -162,22 +163,59 @@ setupDataScale.on('end', function() {
   _.map(patterns, function(pattern) {
     var grpData = tranings[pattern.join("")];
 
-    // setup 95% of the maxDown array
-    var tmpArray = _.sortBy( _.map(_.filter(_.keys(grpData), function(item) { return ((item.charAt(0) === '_') && (grpData[item].getDistance() < 0) && (grpData[item].isCompleted())   ); }), function(objName) {
-      return grpData[objName].getDistance();
-    }) , function(num) {
-      return num;
+    async.waterfall([
+      function(cb) {
+        // counting the completed dataset
+        grpData.dataSetCnt = _.filter(_.keys(grpData), function(item) {
+          if ((item.charAt(0) === '_') && (grpData[item].isCompleted()))
+//        console.log(grpData[item].getDistance());
+            return ((item.charAt(0) === '_') && (grpData[item].isCompleted()));
+        }).length;
+        cb(null);
+      },
+      function(cb) {
+        // In order to filter market crashed price values, setup 95% of the maxDown array for the maxDown
+        var tmpArray = _.sortBy( _.map(_.filter(_.keys(grpData), function(item) { return ((item.charAt(0) === '_') && (grpData[item].getDistance() < 0) && (grpData[item].isCompleted())   ); }), function(objName) {
+          return grpData[objName].getDistance();
+        }) , function(num) {
+          return num;
+        });
+        grpData.maxDown = tmpArray[Math.floor(tmpArray.length * 0.05)];
+        cb(null);
+      },
+      function(cb) {
+        var validDataSet = _.filter(_.keys(grpData), function(item) { return ((item.charAt(0) === '_') && (grpData[item].isCompleted())); });
+
+        // get the dataset for training by ttRatio(Training and Testing Ratio)
+        var trainSet = _.map(_.first( validDataSet, Math.ceil( grpData.dataSetCnt * (ttRatio/100))) , function(objName) {
+          return grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp);
+        })
+//    console.log(trainSet);
+        cb(null, validDataSet, grpData.net.train(trainSet, {
+          errorThresh: 0.064,  // error threshold to reach
+          iterations: 20000,   // maximum training iterations
+          log: true,           // console.log() progress periodically
+          logPeriod: 100        // number of iterations between logging
+        }));
+      },
+      function(validDataSet, dummy, cb) {
+
+        // get the raw dataset for testing by ttRatio
+        cb(null,
+          _.map(_.last( validDataSet, grpData.dataSetCnt - Math.ceil( grpData.dataSetCnt * (ttRatio/100))) , function(objName) {
+//            console.log('! %s',objName);
+  //          console.log(grpData[objName].getRaw());
+
+            return ( grpData.net.run( grpData[objName].getRaw() ) );
+          })
+        );
+
+      }
+    ],
+    function(err, results) {
+      console.log(results);
     });
-    grpData.maxDown = tmpArray[Math.floor(tmpArray.length * 0.05)];
 
-    // get all the dataset for training
-    var dataset = _.map(_.filter(_.keys(grpData), function(item) { return ((item.charAt(0) === '_') && (grpData[item].isCompleted())); }), function(objName) {
-      return grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp);
-    });
-
-    console.log(dataset);
-
-    grpData.net.train( dataset );
   });
 
 });
@@ -204,6 +242,9 @@ var request = require('request');
 
 // tick data from google:
 // http://www.google.com/finance/info?client=ig&q=gld
+
+// training and testing ratio like 90% and 10%
+var ttRatio = 95;
 
 var patterns = [['m',1,'m',1]];
 var tranings = {};
