@@ -192,7 +192,7 @@ setupDataScale.on('end', function() {
         })
 //    console.log(trainSet);
         cb(null, validDataSet, grpData.net.train(trainSet, {
-          errorThresh: 0.064,  // error threshold to reach
+          errorThresh: 0.004,  // error threshold to reach
           iterations: 20000,   // maximum training iterations
           log: true,           // console.log() progress periodically
           logPeriod: 100        // number of iterations between logging

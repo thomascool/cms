@@ -47,24 +47,15 @@ exports.bayesItem = function(pattern, name) {
       return _input;
     },
     getInput : function() {
-      return _.map(_input, function(item) { return 1 - ((item[__close] - _min) / (_max - _min)); });
+      return _.map(_input, function(item) { return ((item[__close] - _min) / (_max - _min)); });
     },
     getRaw : function() {
       var rawData = _.reduce(_.range(_input.length), function(memo, num){
         var tmp = {}
-        tmp['a' + num] = Math.ceil(((_input[num][__close] - _min) / (_max - _min)) * 1000) / 1000;
+        tmp['a' + num] = ((_input[num][__close] - _min) / (_max - _min));
         return memo = _.extend(memo, tmp);
       }, {});
       return rawData;
-/*
-
-      return  _.extend({}, _.map(_input, function(item) {
-          var tmpVal = {}
-          tmpVal[]
-          return 1-((item[__close] - _min) / (_max - _min)) ;
-        })
-      );
-      */
     },
     pushOutput : function(aLine) {
       _output.push(aLine);
@@ -76,15 +67,15 @@ exports.bayesItem = function(pattern, name) {
     getDataSet : function(maxUp, minDown, maxDown, minUp) {
       var outputData = {};
       if (_distance >= 0) {
-        outputData['up'] = Math.ceil(((_distance - minUp) / (maxUp - minUp))*1000)/1000;
+        outputData['up'] = ((_distance - minUp) / (maxUp - minUp));
       } else {
         var tmpVal = Math.abs(_distance - minDown) / (minDown - maxDown);
-        outputData['down'] = (tmpVal > 1) ? 1 : Math.ceil(tmpVal*1000)/1000;
+        outputData['down'] = (tmpVal > 1) ? 1 : tmpVal;
       }
       var inputData = _.reduce(_.range(_input.length), function(memo, num){
         var tmp = {}
 //        tmp['a' + num] = (_input[num][__close] - _min) / (_max - _min);
-        tmp['a' + num] = Math.ceil(((_input[num][__close] - _min) / (_max - _min)) * 1000) / 1000;
+        tmp['a' + num] = ((_input[num][__close] - _min) / (_max - _min));
         return memo = _.extend(memo, tmp);
       }, {});
 
