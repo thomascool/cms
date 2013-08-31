@@ -76,7 +76,7 @@ calucateTheClosing._transform = function(data, encoding, done) {
         minUp : 10000,
         dataSetCnt : 0,
         net : new brain.NeuralNetwork()
-  };
+      };
 
     var grpData = tranings[patternStr];
 
@@ -97,7 +97,6 @@ calucateTheClosing._transform = function(data, encoding, done) {
   });
 
   this.push(transform);
-
   done();
 };
 
@@ -112,7 +111,8 @@ extractTrainingData._transform = function(data, encoding, done) {
     var grpData = tranings[pattern.join("")];
     if (pattern[0] == 'm') {
       _.map(_.range(pattern[1]), function(item) {
-        grpData['_m'+(data[2]-item)].pushInput(data);
+        if (grpData['_m'+(data[2]-item)])
+          grpData['_m'+(data[2]-item)].pushInput(data);
       });
     }
     if (pattern[2] == 'm') {
@@ -188,9 +188,14 @@ setupDataScale.on('end', function() {
 
         // get the dataset for training by ttRatio(Training and Testing Ratio)
         var trainSet = _.map(_.first( validDataSet, Math.ceil( grpData.dataSetCnt * (ttRatio/100))) , function(objName) {
-          return grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp);
-        })
-//    console.log(trainSet);
+          var tmpVal = grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp);
+          if (_.values(tmpVal.output)[0] >= minOutput) {
+            return tmpVal;
+          } else {
+            return {input : {}, output: {}};
+          }
+        });
+    console.log(trainSet);
         cb(null, validDataSet, grpData.net.train(trainSet, {
           errorThresh: 0.004,  // error threshold to reach
           iterations: 20000,   // maximum training iterations
@@ -203,17 +208,28 @@ setupDataScale.on('end', function() {
         // get the raw dataset for testing by ttRatio
         cb(null,
           _.map(_.last( validDataSet, grpData.dataSetCnt - Math.ceil( grpData.dataSetCnt * (ttRatio/100))) , function(objName) {
-//            console.log('! %s',objName);
-  //          console.log(grpData[objName].getRaw());
+            console.log('[ %s ] ',objName
+            , grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp).output
+            , grpData.net.run( grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp).input )
+            );
 
-            return ( grpData.net.run( grpData[objName].getRaw() ) );
+            return ( grpData.net.run( grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp).input ) );
           })
         );
 
       }
     ],
     function(err, results) {
-      console.log(results);
+      console.log(_.map(results, function(item) {
+        if (item.up > item.down)
+         return 'up   '+(item.up - item.down);
+        else return 'down '+(item.down - item.up);
+      }));
+      var objName = '_m52';
+      console.log('[ %s ] ',objName
+      , grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp).output
+      , grpData.net.run( grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp).input )
+      );
     });
 
   });
@@ -244,9 +260,10 @@ var request = require('request');
 // http://www.google.com/finance/info?client=ig&q=gld
 
 // training and testing ratio like 90% and 10%
-var ttRatio = 95;
+var ttRatio = 97;
+var minOutput = 0.1;
 
-var patterns = [['m',1,'m',1]];
+var patterns = [['m',1,'m',1],['m',2,'m',1]];
 var tranings = {};
 
 xs.sliceReverse(1)

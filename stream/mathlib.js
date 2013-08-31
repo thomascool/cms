@@ -74,11 +74,9 @@ exports.bayesItem = function(pattern, name) {
       }
       var inputData = _.reduce(_.range(_input.length), function(memo, num){
         var tmp = {}
-//        tmp['a' + num] = (_input[num][__close] - _min) / (_max - _min);
-        tmp['a' + num] = ((_input[num][__close] - _min) / (_max - _min));
+        tmp['a' + num] = (_input[num][__close] - _min) / (_max - _min);
         return memo = _.extend(memo, tmp);
       }, {});
-
       return {input: inputData, output: outputData};
     },
     setScale : function() {
