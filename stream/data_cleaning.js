@@ -7,7 +7,6 @@ var Transform = require('stream').Transform
   , csv = require('csv-streamify')
   , JSONStream = require('JSONStream');
 var sf = require('slice-file');
-var xs = sf('/tmp/EEM.csv');
 var async = require('async');
 
 var brain = require('brain');
@@ -312,13 +311,31 @@ var patterns = [['m',1,'m',1],
                 ['m',12,'m',4],
 
 ];
+
 var tranings = {};
 
-xs.sliceReverse(1)
-.pipe(csvToJson)
-.pipe(uniformData)
-.pipe(calucateTheClosing)
-.pipe(extractTrainingData)
-.pipe(setupDataScale)
+if (process.argv.length <= 2) {
+  console.log ('%s <datafile.csv from "http://finance.yahoo.com/q/hp?s=EEM+Historical+Prices">', process.argv[1]);
+  process.exit(1);
+} else {
+  _.each(_.range(2,process.argv.length), function(idx) {
+    var path = process.argv[idx];
+    console.log('==========================');
+    console.log(path);
+    console.log('==========================');
+
+    var xs = sf(path);
+
+    xs.sliceReverse(1)
+    .pipe(csvToJson)
+    .pipe(uniformData)
+    .pipe(calucateTheClosing)
+    .pipe(extractTrainingData)
+    .pipe(setupDataScale)
 //.pipe(jsonToStrings)
-.pipe(process.stdout);
+    .pipe(process.stdout);
+
+  });
+}
+
+
