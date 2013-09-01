@@ -160,8 +160,10 @@ setupDataScale._transform = function(data, encoding, done) {
 
 setupDataScale.on('end', function() {
 
-  _.map(patterns, function(pattern) {
+  async.map(patterns, function(pattern, callback) {
     var grpData = tranings[pattern.join("")];
+    var lineNum = 0;
+    var thisFinal = [];
 
     async.waterfall([
       function(cb) {
@@ -195,11 +197,11 @@ setupDataScale.on('end', function() {
             return {input : {}, output: {}};
           }
         });
-    console.log(trainSet);
+//    console.log(trainSet);
         cb(null, validDataSet, grpData.net.train(trainSet, {
-          errorThresh: 0.004,  // error threshold to reach
+          errorThresh: 0.008,  // error threshold to reach
           iterations: 20000,   // maximum training iterations
-          log: true,           // console.log() progress periodically
+          log: false,           // console.log() progress periodically
           logPeriod: 100        // number of iterations between logging
         }));
       },
@@ -208,48 +210,38 @@ setupDataScale.on('end', function() {
         // get the raw dataset for testing by ttRatio
         cb(null,
           _.map(_.last( validDataSet, grpData.dataSetCnt - Math.ceil( grpData.dataSetCnt * (ttRatio/100))) , function(objName) {
-            console.log('[ %s ] ',objName
-            , grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp).output
-            , grpData.net.run( grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp).input )
-            );
+            lineNum++;
+            var tmpDataSet = grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp)
+            , tmpRun =  grpData.net.run( tmpDataSet );
 
-            return ( grpData.net.run( grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp).input ) );
+            return ({
+              pattern : grpData[objName].getPattern(),
+              name : objName,
+              line : lineNum,
+              Actual_outcome : JSON.stringify( tmpDataSet.output ),
+              testDIR : JSON.stringify((tmpRun.up > tmpRun.down) ? {up:(tmpRun.up - tmpRun.down)} : {down:(tmpRun.down - tmpRun.up)}),
+              testResult : JSON.stringify( tmpRun )
+            });
           })
         );
-
       }
     ],
     function(err, results) {
-      console.log(_.map(results, function(item) {
-        if (item.up > item.down)
-         return 'up   '+(item.up - item.down);
-        else return 'down '+(item.down - item.up);
-      }));
-      var objName = '_m52';
-      console.log('[ %s ] ',objName
-      , grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp).output
-      , grpData.net.run( grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp).input )
-      );
+      callback(null, results);
     });
-
+  }, function(err, finalresults) {
+    // OUTPUT ALL TOGETHER BY GROUP OF SAME TESTING DATA SOURCE (e.g. same month)
+    console.log(_.groupBy(
+    _.reduce( finalresults, function(finalset, item) {
+      return finalset = finalset.concat(item);
+    }, [])
+    , function(item) {
+      return item.line + '_' + item.pattern[3];
+    }));
   });
+
 
 });
-
-
-
-var setTrainingData = new Transform({objectMode: true});
-
-setTrainingData._transform = function(data, encoding, done) {
-  var dataset = {};
-
-  _.map(patterns, function(pattern) {
-    var patternStr = pattern.join("");
-    this.push([patternStr]);
-    done();
-  });
-
-};
 
 var jsonToStrings = JSONStream.stringify(false);
 var request = require('request');
@@ -263,7 +255,24 @@ var request = require('request');
 var ttRatio = 97;
 var minOutput = 0.1;
 
-var patterns = [['m',1,'m',1],['m',2,'m',1]];
+var patterns = [['m',1,'m',1],
+                ['m',2,'m',1],
+                ['m',3,'m',1],
+                ['m',4,'m',1],
+                ['m',5,'m',1],
+                ['m',6,'m',1],
+                ['m',7,'m',1],
+                ['m',8,'m',1],
+                ['m',9,'m',1],
+                ['m',2,'m',2],
+                ['m',3,'m',2],
+                ['m',4,'m',2],
+                ['m',5,'m',2],
+                ['m',6,'m',2],
+                ['m',7,'m',2],
+                ['m',8,'m',2],
+                ['m',9,'m',2]
+               ];
 var tranings = {};
 
 xs.sliceReverse(1)
@@ -272,6 +281,5 @@ xs.sliceReverse(1)
 .pipe(calucateTheClosing)
 .pipe(extractTrainingData)
 .pipe(setupDataScale)
-//.pipe(setTrainingData)
 //.pipe(jsonToStrings)
 .pipe(process.stdout);
