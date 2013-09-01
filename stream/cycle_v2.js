@@ -239,15 +239,17 @@ setupDataScale.on('end', function() {
       return 'p' + item.line + '_m' + item.pattern[3];
     });
 
-    console.log(rptGroupBy);
+    console.log('~~%s\n',_sym, rptGroupBy);
 
-    console.log(_.map(rptGroupBy, function(v, n) {
+    console.log('~~%s\n',_sym,_.map(rptGroupBy, function(v, n) {
       var tmpRtn = {};
       tmpRtn[n] = _.countBy(v, function(item) {
         return _.keys(JSON.parse(item.Actual_outcome))[0] == _.keys(JSON.parse(item.testDIR))[0];
       });
       return(tmpRtn);
     }));
+    process.exit(0);
+
   });
 
 
@@ -277,45 +279,39 @@ var patterns = [['m',1,'m',1],
                 ['m',10,'m',1],
                 ['m',11,'m',1],
                 ['m',12,'m',1],
-];
 
-/*
+                ['m',2,'m',2],
+                ['m',3,'m',2],
+                ['m',4,'m',2],
+                ['m',5,'m',2],
+                ['m',6,'m',2],
+                ['m',7,'m',2],
+                ['m',8,'m',2],
+                ['m',9,'m',2],
+                ['m',10,'m',2],
+                ['m',11,'m',2],
+                ['m',12,'m',2],
 
+                ['m',3,'m',3],
+                ['m',4,'m',3],
+                ['m',5,'m',3],
+                ['m',6,'m',3],
+                ['m',7,'m',3],
+                ['m',8,'m',3],
+                ['m',9,'m',3],
+                ['m',10,'m',3],
+                ['m',11,'m',3],
+                ['m',12,'m',3],
 
- ['m',2,'m',2],
- ['m',3,'m',2],
- ['m',4,'m',2],
- ['m',5,'m',2],
- ['m',6,'m',2],
- ['m',7,'m',2],
- ['m',8,'m',2],
- ['m',9,'m',2],
- ['m',10,'m',2],
- ['m',11,'m',2],
- ['m',12,'m',2],
-
- ['m',3,'m',3],
- ['m',4,'m',3],
- ['m',5,'m',3],
- ['m',6,'m',3],
- ['m',7,'m',3],
- ['m',8,'m',3],
- ['m',9,'m',3],
- ['m',10,'m',3],
- ['m',11,'m',3],
- ['m',12,'m',3],
-
- ['m',4,'m',4],
- ['m',5,'m',4],
- ['m',6,'m',4],
- ['m',7,'m',4],
- ['m',8,'m',4],
- ['m',9,'m',4],
- ['m',10,'m',4],
- ['m',11,'m',4],
- ['m',12,'m',4],
- 
- */
+                ['m',4,'m',4],
+                ['m',5,'m',4],
+                ['m',6,'m',4],
+                ['m',7,'m',4],
+                ['m',8,'m',4],
+                ['m',9,'m',4],
+                ['m',10,'m',4],
+                ['m',11,'m',4],
+                ['m',12,'m',4],];
 
 var tranings = {};
 
@@ -330,12 +326,13 @@ if (cluster.isMaster) {
 } else if (cluster.isWorker) {
 //  console.log('I am worker env #' + process.env['SYMBOL']);
 
-    var path = process.env['SYMBOL'];
+    var _path = process.env['SYMBOL'];
+    var _sym = _.last(_path.split('/')).split('.')[0];
     console.log('==========================');
-    console.log(path);
+    console.log(_path);
     console.log('==========================');
 
-    var xs = sf(path);
+    var xs = sf(_path);
 
     xs.sliceReverse(1)
     .pipe(csvToJson)
