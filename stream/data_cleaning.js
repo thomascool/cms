@@ -231,12 +231,22 @@ setupDataScale.on('end', function() {
     });
   }, function(err, finalresults) {
     // OUTPUT ALL TOGETHER BY GROUP OF SAME TESTING DATA SOURCE (e.g. same month)
-    console.log(_.groupBy(
+    var rptGroupBy = _.groupBy(
     _.reduce( finalresults, function(finalset, item) {
       return finalset = finalset.concat(item);
     }, [])
     , function(item) {
-      return item.line + '_' + item.pattern[3];
+      return 'p' + item.line + '_m' + item.pattern[3];
+    });
+
+    console.log(rptGroupBy);
+
+    console.log(_.map(rptGroupBy, function(v, n) {
+      var tmpRtn = {};
+      tmpRtn[n] = _.countBy(v, function(item) {
+        return _.keys(JSON.parse(item.Actual_outcome))[0] == _.keys(JSON.parse(item.testDIR))[0];
+      });
+      return(tmpRtn);
     }));
   });
 
@@ -264,6 +274,7 @@ var patterns = [['m',1,'m',1],
                 ['m',7,'m',1],
                 ['m',8,'m',1],
                 ['m',9,'m',1],
+
                 ['m',2,'m',2],
                 ['m',3,'m',2],
                 ['m',4,'m',2],
@@ -271,7 +282,15 @@ var patterns = [['m',1,'m',1],
                 ['m',6,'m',2],
                 ['m',7,'m',2],
                 ['m',8,'m',2],
-                ['m',9,'m',2]
+                ['m',9,'m',2],
+
+                ['m',3,'m',3],
+                ['m',4,'m',3],
+                ['m',5,'m',3],
+                ['m',6,'m',3],
+                ['m',7,'m',3],
+                ['m',8,'m',3],
+                ['m',9,'m',3],
                ];
 var tranings = {};
 
