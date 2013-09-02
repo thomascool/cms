@@ -159,7 +159,7 @@ setupDataScale._transform = function(data, encoding, done) {
 };
 
 setupDataScale.on('end', function() {
-
+  console.log('Start trainning...')
   async.map(patterns, function(pattern, callback) {
     var grpData = tranings[pattern.join("")];
     var lineNum = 0;
@@ -167,6 +167,7 @@ setupDataScale.on('end', function() {
 
     async.waterfall([
       function(cb) {
+        console.log('Start trainning...1')
         // counting the completed dataset
         grpData.dataSetCnt = _.filter(_.keys(grpData), function(item) {
           if ((item.charAt(0) === '_') && (grpData[item].isCompleted()))
@@ -176,16 +177,18 @@ setupDataScale.on('end', function() {
         cb(null);
       },
       function(cb) {
+        console.log('Start trainning...2')
         // In order to filter market crashed price values, setup 95% of the maxDown array for the maxDown
         var tmpArray = _.sortBy( _.map(_.filter(_.keys(grpData), function(item) { return ((item.charAt(0) === '_') && (grpData[item].getDistance() < 0) && (grpData[item].isCompleted())   ); }), function(objName) {
           return grpData[objName].getDistance();
         }) , function(num) {
           return num;
         });
-        grpData.maxDown = tmpArray[Math.floor(tmpArray.length * 0.05)];
+        grpData.maxDown = tmpArray[Math.floor(tmpArray.length * maxDownTrim)];
         cb(null);
       },
       function(cb) {
+        console.log('Start trainning...3')
         var validDataSet = _.filter(_.keys(grpData), function(item) { return ((item.charAt(0) === '_') && (grpData[item].isCompleted())); });
 
         // get the dataset for training by ttRatio(Training and Testing Ratio)
@@ -199,13 +202,14 @@ setupDataScale.on('end', function() {
         });
 //    console.log(trainSet);
         cb(null, validDataSet, grpData.net.train(trainSet, {
-          errorThresh: 0.008,  // error threshold to reach
-          iterations: 20000,   // maximum training iterations
+          errorThresh: 0.006,  // error threshold to reach
+          iterations: 3000,   // maximum training iterations
           log: false,           // console.log() progress periodically
           logPeriod: 100        // number of iterations between logging
         }));
       },
       function(validDataSet, dummy, cb) {
+        console.log('Start trainning...4')
 
         // get the raw dataset for testing by ttRatio
         cb(null,
@@ -236,7 +240,7 @@ setupDataScale.on('end', function() {
       return finalset = finalset.concat(item);
     }, [])
     , function(item) {
-      return 'p' + item.line + '_m' + item.pattern[3];
+      return 'p' + item.line + '_m' + item.pattern.split('m')[1];
     });
 
     console.log('~~%s\n',_sym, rptGroupBy);
@@ -264,54 +268,95 @@ var request = require('request');
 // http://www.google.com/finance/info?client=ig&q=gld
 
 // training and testing ratio like 90% and 10%
-var ttRatio = 97;
+var ttRatio = 95;
 var minOutput = 0.1;
+var maxDownTrim = 0.05;
 
-var patterns = [['m',1,'m',1],
-                ['m',2,'m',1],
-                ['m',3,'m',1],
-                ['m',4,'m',1],
-                ['m',5,'m',1],
-                ['m',6,'m',1],
-                ['m',7,'m',1],
-                ['m',8,'m',1],
-                ['m',9,'m',1],
-                ['m',10,'m',1],
-                ['m',11,'m',1],
-                ['m',12,'m',1],
+var patterns = [
 
-                ['m',2,'m',2],
-                ['m',3,'m',2],
-                ['m',4,'m',2],
-                ['m',5,'m',2],
-                ['m',6,'m',2],
-                ['m',7,'m',2],
-                ['m',8,'m',2],
-                ['m',9,'m',2],
-                ['m',10,'m',2],
-                ['m',11,'m',2],
-                ['m',12,'m',2],
+  ['m',1,'m',1],
+  ['m',2,'m',1],
+  ['m',3,'m',1],
+  ['m',4,'m',1],
+  ['m',5,'m',1],
+  ['m',6,'m',1],
+  ['m',7,'m',1],
+  ['m',8,'m',1],
+  ['m',9,'m',1],
 
-                ['m',3,'m',3],
-                ['m',4,'m',3],
-                ['m',5,'m',3],
-                ['m',6,'m',3],
-                ['m',7,'m',3],
-                ['m',8,'m',3],
-                ['m',9,'m',3],
-                ['m',10,'m',3],
-                ['m',11,'m',3],
-                ['m',12,'m',3],
+  ['m',2,'m',2],
+  ['m',3,'m',2],
+  ['m',4,'m',2],
+  ['m',5,'m',2],
+  ['m',6,'m',2],
+  ['m',7,'m',2],
+  ['m',8,'m',2],
+  ['m',9,'m',2],
 
-                ['m',4,'m',4],
-                ['m',5,'m',4],
-                ['m',6,'m',4],
-                ['m',7,'m',4],
-                ['m',8,'m',4],
-                ['m',9,'m',4],
-                ['m',10,'m',4],
-                ['m',11,'m',4],
-                ['m',12,'m',4],];
+  ['m',3,'m',3],
+  ['m',4,'m',3],
+  ['m',5,'m',3],
+  ['m',6,'m',3],
+  ['m',7,'m',3],
+  ['m',8,'m',3],
+  ['m',9,'m',3],
+
+  ['m',4,'m',4],
+  ['m',5,'m',4],
+  ['m',6,'m',4],
+  ['m',7,'m',4],
+  ['m',8,'m',4],
+  ['m',9,'m',4],
+];
+
+patternsxxxxx = [
+            ['m',1,'m',1],
+            ['m',2,'m',1],
+            ['m',3,'m',1],
+            ['m',4,'m',1],
+            ['m',5,'m',1],
+            ['m',6,'m',1],
+            ['m',7,'m',1],
+            ['m',8,'m',1],
+            ['m',9,'m',1],
+            ['m',10,'m',1],
+            ['m',11,'m',1],
+            ['m',12,'m',1],
+
+
+            ['m',2,'m',2],
+            ['m',3,'m',2],
+            ['m',4,'m',2],
+            ['m',5,'m',2],
+            ['m',6,'m',2],
+            ['m',7,'m',2],
+            ['m',8,'m',2],
+            ['m',9,'m',2],
+            ['m',10,'m',2],
+            ['m',11,'m',2],
+            ['m',12,'m',2],
+
+            ['m',3,'m',3],
+            ['m',4,'m',3],
+            ['m',5,'m',3],
+            ['m',6,'m',3],
+            ['m',7,'m',3],
+            ['m',8,'m',3],
+            ['m',9,'m',3],
+            ['m',10,'m',3],
+            ['m',11,'m',3],
+            ['m',12,'m',3],
+
+            ['m',4,'m',4],
+            ['m',5,'m',4],
+            ['m',6,'m',4],
+            ['m',7,'m',4],
+            ['m',8,'m',4],
+            ['m',9,'m',4],
+            ['m',10,'m',4],
+            ['m',11,'m',4],
+            ['m',12,'m',4],];
+
 
 var tranings = {};
 
