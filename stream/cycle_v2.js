@@ -159,15 +159,13 @@ setupDataScale._transform = function(data, encoding, done) {
 };
 
 setupDataScale.on('end', function() {
-  console.log('Start trainning...')
-  async.map(patterns, function(pattern, callback) {
+  async.mapSeries(patterns, function(pattern, callback) {
     var grpData = tranings[pattern.join("")];
     var lineNum = 0;
     var thisFinal = [];
 
     async.waterfall([
       function(cb) {
-        console.log('Start trainning...1')
         // counting the completed dataset
         grpData.dataSetCnt = _.filter(_.keys(grpData), function(item) {
           if ((item.charAt(0) === '_') && (grpData[item].isCompleted()))
@@ -177,7 +175,6 @@ setupDataScale.on('end', function() {
         cb(null);
       },
       function(cb) {
-        console.log('Start trainning...2')
         // In order to filter market crashed price values, setup 95% of the maxDown array for the maxDown
         var tmpArray = _.sortBy( _.map(_.filter(_.keys(grpData), function(item) { return ((item.charAt(0) === '_') && (grpData[item].getDistance() < 0) && (grpData[item].isCompleted())   ); }), function(objName) {
           return grpData[objName].getDistance();
@@ -188,7 +185,6 @@ setupDataScale.on('end', function() {
         cb(null);
       },
       function(cb) {
-        console.log('Start trainning...3')
         var validDataSet = _.filter(_.keys(grpData), function(item) { return ((item.charAt(0) === '_') && (grpData[item].isCompleted())); });
 
         // get the dataset for training by ttRatio(Training and Testing Ratio)
@@ -200,6 +196,7 @@ setupDataScale.on('end', function() {
             return {input : {}, output: {}};
           }
         });
+        console.log('Start trainning for %s[%s]', _path , pattern.join(""))
 //    console.log(trainSet);
         cb(null, validDataSet, grpData.net.train(trainSet, {
           errorThresh: 0.006,  // error threshold to reach
@@ -209,7 +206,6 @@ setupDataScale.on('end', function() {
         }));
       },
       function(validDataSet, dummy, cb) {
-        console.log('Start trainning...4')
 
         // get the raw dataset for testing by ttRatio
         cb(null,
@@ -369,14 +365,8 @@ if (cluster.isMaster) {
     cluster.fork({'SYMBOL':idx});
   });
 } else if (cluster.isWorker) {
-//  console.log('I am worker env #' + process.env['SYMBOL']);
-
     var _path = process.env['SYMBOL'];
     var _sym = _.last(_path.split('/')).split('.')[0];
-    console.log('==========================');
-    console.log(_path);
-    console.log('==========================');
-
     var xs = sf(_path);
 
     xs.sliceReverse(1)
