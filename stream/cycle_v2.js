@@ -127,7 +127,6 @@ extractTrainingData._transform = function(data, encoding, done) {
         }
       }
     }
-
   });
 
   lastData = data;
@@ -161,7 +160,6 @@ setupDataScale._transform = function(data, encoding, done) {
 setupDataScale.on('end', function() {
   async.mapSeries(patterns, function(pattern, callback) {
     var grpData = tranings[pattern.join("")];
-    var lineNum = 0;
     var thisFinal = [];
 
     async.waterfall([
@@ -197,32 +195,32 @@ setupDataScale.on('end', function() {
           }
         });
         console.log('Start trainning for %s[%s]', _path , pattern.join(""))
-//    console.log(trainSet);
+    console.log(trainSet);
         cb(null, validDataSet, grpData.net.train(trainSet, {
-          errorThresh: 0.006,  // error threshold to reach
+          errorThresh: 0.004,  // error threshold to reach
           iterations: 3000,   // maximum training iterations
           log: false,           // console.log() progress periodically
           logPeriod: 100        // number of iterations between logging
         }));
       },
       function(validDataSet, dummy, cb) {
-
+        var lineNum = 0;
         // get the raw dataset for testing by ttRatio
         cb(null,
-        _.map(_.last( validDataSet, grpData.dataSetCnt - Math.ceil( grpData.dataSetCnt * (ttRatio/100))) , function(objName) {
-          lineNum++;
-          var tmpDataSet = grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp)
-          , tmpRun =  grpData.net.run( tmpDataSet );
+          _.map(_.last( validDataSet, grpData.dataSetCnt - Math.ceil( grpData.dataSetCnt * (ttRatio/100))) , function(objName) {
+            lineNum++;
+            var tmpDataSet = grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp)
+            , tmpRun =  grpData.net.run( tmpDataSet.input );
 
-          return ({
-            pattern : grpData[objName].getPattern(),
-            name : objName,
-            line : lineNum,
-            Actual_outcome : JSON.stringify( tmpDataSet.output ),
-            testDIR : JSON.stringify((tmpRun.up > tmpRun.down) ? {up:(tmpRun.up - tmpRun.down)} : {down:(tmpRun.down - tmpRun.up)}),
-            testResult : JSON.stringify( tmpRun )
-          });
-        })
+            return ({
+              pattern : grpData[objName].getPattern(),
+              name : objName,
+              line : lineNum,
+              Actual_outcome : JSON.stringify( tmpDataSet.output ),
+              testDIR : JSON.stringify((tmpRun.up > tmpRun.down) ? {up:(tmpRun.up - tmpRun.down)} : {down:(tmpRun.down - tmpRun.up)}),
+              testResult : JSON.stringify( tmpRun )
+            });
+          })
         );
       }
     ],
@@ -264,45 +262,13 @@ var request = require('request');
 // http://www.google.com/finance/info?client=ig&q=gld
 
 // training and testing ratio like 90% and 10%
-var ttRatio = 95;
+var ttRatio = 97;
 var minOutput = 0.1;
 var maxDownTrim = 0.05;
 
 var patterns = [
-
   ['m',1,'m',1],
   ['m',2,'m',1],
-  ['m',3,'m',1],
-  ['m',4,'m',1],
-  ['m',5,'m',1],
-  ['m',6,'m',1],
-  ['m',7,'m',1],
-  ['m',8,'m',1],
-  ['m',9,'m',1],
-
-  ['m',2,'m',2],
-  ['m',3,'m',2],
-  ['m',4,'m',2],
-  ['m',5,'m',2],
-  ['m',6,'m',2],
-  ['m',7,'m',2],
-  ['m',8,'m',2],
-  ['m',9,'m',2],
-
-  ['m',3,'m',3],
-  ['m',4,'m',3],
-  ['m',5,'m',3],
-  ['m',6,'m',3],
-  ['m',7,'m',3],
-  ['m',8,'m',3],
-  ['m',9,'m',3],
-
-  ['m',4,'m',4],
-  ['m',5,'m',4],
-  ['m',6,'m',4],
-  ['m',7,'m',4],
-  ['m',8,'m',4],
-  ['m',9,'m',4],
 ];
 
 patternsxxxxx = [

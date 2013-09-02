@@ -211,7 +211,7 @@ setupDataScale.on('end', function() {
           _.map(_.last( validDataSet, grpData.dataSetCnt - Math.ceil( grpData.dataSetCnt * (ttRatio/100))) , function(objName) {
             lineNum++;
             var tmpDataSet = grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp)
-            , tmpRun =  grpData.net.run( tmpDataSet );
+            , tmpRun =  grpData.net.run( tmpDataSet.input );
 
             return ({
               pattern : grpData[objName].getPattern(),
