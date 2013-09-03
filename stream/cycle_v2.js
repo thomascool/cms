@@ -186,19 +186,17 @@ setupDataScale.on('end', function() {
         var validDataSet = _.filter(_.keys(grpData), function(item) { return ((item.charAt(0) === '_') && (grpData[item].isCompleted())); });
 
         // get the dataset for training by ttRatio(Training and Testing Ratio)
-        var trainSet = _.map(_.first( validDataSet, Math.ceil( grpData.dataSetCnt * (ttRatio/100))) , function(objName) {
-          var tmpVal = grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp);
-          if (_.values(tmpVal.output)[0] >= minOutput) {
-            return tmpVal;
-          } else {
-            return {input : {}, output: {}};
-          }
+        var trainSet =  _.filter(_.map(_.first( validDataSet, Math.ceil( grpData.dataSetCnt * (ttRatio/100))) , function(objName) {
+          return grpData[objName].getDataSet(grpData.maxUp, grpData.minDown, grpData.maxDown, grpData.minUp);
+        }), function(item) {
+          return (_.values(item.output)[0] >= minOutput)
         });
+
         console.log('Start trainning for %s[%s]', _path , pattern.join(""))
-    console.log(trainSet);
+//    console.log(trainSet);
         cb(null, validDataSet, grpData.net.train(trainSet, {
           errorThresh: 0.004,  // error threshold to reach
-          iterations: 3000,   // maximum training iterations
+          iterations: 4000,   // maximum training iterations
           log: false,           // console.log() progress periodically
           logPeriod: 100        // number of iterations between logging
         }));
@@ -237,7 +235,7 @@ setupDataScale.on('end', function() {
       return 'p' + item.line + '_m' + item.pattern.split('m')[1];
     });
 
-    console.log('~~%s\n',_sym, rptGroupBy);
+//    console.log('~~%s\n',_sym, rptGroupBy);
 
     console.log('~~%s\n',_sym,_.map(rptGroupBy, function(v, n) {
       var tmpRtn = {};
@@ -263,12 +261,18 @@ var request = require('request');
 
 // training and testing ratio like 90% and 10%
 var ttRatio = 97;
-var minOutput = 0.1;
-var maxDownTrim = 0.05;
+var minOutput = 0.05; // 0.05
+var maxDownTrim = 0.05; // 0.05
 
 var patterns = [
   ['m',1,'m',1],
   ['m',2,'m',1],
+  ['m',3,'m',1],
+  ['m',4,'m',1],
+  ['m',6,'m',1],
+
+  ['m',12,'m',2],
+
 ];
 
 patternsxxxxx = [
