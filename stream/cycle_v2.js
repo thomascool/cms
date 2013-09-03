@@ -63,6 +63,7 @@ var last=null;
 
 calucateTheClosing._transform = function(data, encoding, done) {
   _.once(function() { last = data; tranings = {}; });
+  // price = (H + L (C*2))/4
   var transform = [data[7], data[8], data[9], data[10], data[0], (parseFloat(data[2])+parseFloat(data[3])+(parseFloat(data[4])*2))/4, parseInt(data[5],10) ];
 
   // prepare the training data by creating all the group head in JSON
@@ -260,7 +261,7 @@ var request = require('request');
 // http://www.google.com/finance/info?client=ig&q=gld
 
 // training and testing ratio like 90% and 10%
-var ttRatio = 97;
+var ttRatio = 90;
 var minOutput = 0.05; // 0.05
 var maxDownTrim = 0.05; // 0.05
 
