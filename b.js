@@ -78,6 +78,9 @@ wget('chartapi.finance.yahoo.com', '/instrument/1.0/UVXY/chartdata;type=quote;ra
 
  db.symbolList.insert({ 'segment':1, 'symbol':['UVXY','SVXY','TVIX','XIV'] } )
 
+ALL DATA IN TICKET LEVEL:
+ http://www.nasdaq.com/aspx/NLS/NLSHandler.ashx?msg=Price&Symbol=TVIX#!
+
  */
 
 
