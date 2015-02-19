@@ -7,11 +7,13 @@
     "npm": "1.2.x"
   },
   "dependencies": {
-    "node-xml2json": "latest",
     "async": "latest",
-    "mongodb": "latest",
+    "cheerio": "^0.18.0",
     "moment": "latest",
-    "underscore": "latest",
-    "slice-file": "~0.2.1"
+    "mongodb": "latest",
+    "node-xml2json": "latest",
+    "request": "^2.53.0",
+    "slice-file": "~0.2.1",
+    "underscore": "^1.7.0"
   }
 }
