@@ -2,9 +2,12 @@ var request = require('request'),
   zlib = require('zlib'),
   async = require('async'),
   _ = require('underscore'),
+  MongoClient = require('mongodb').MongoClient,
   cheerio = require('cheerio');
 
-var dataSet = {};
+var _conn_mongo = 'mongodb://127.0.0.1:27017/optiondata',
+    dataSet = {};
+var endCnt = 0;
 
 var headers = {
   "Accept":"application/xml, text/xml, */*",
@@ -20,7 +23,7 @@ var headers = {
 }
 
 var options = {
-  url: "https://invest.ameritrade.com/cgi-bin/apps/u/OptionChain?symbol=SVXY&leg=symbol&type=CP&range=N&expire=AL&tabid=0",
+  url: "https://invest.ameritrade.com/cgi-bin/apps/u/OptionChain?symbol="+process.argv[2]+"&leg=symbol&type=CP&range=ALL&expire=AL&tabid=0",
   headers: headers
 }
 
@@ -55,8 +58,9 @@ var requestWithEncoding = function(options, callback) {
   });
 }
 
-function pad2(n) {  // always returns a string
-  return (n < 10 ? '0' : '') + n;
+if (process.argv.length != 3) {
+  console.log('%s <symbol>', process.argv[1]);
+  process.exit(1);
 }
 
 
@@ -65,19 +69,32 @@ requestWithEncoding(options, function(err, data) {
   else {
     var $ = cheerio.load(data);
 
+    var dt = new Date();
+    // it only run between 6:20am and 13:10pm
+    if (((dt.getHours()*100 + dt.getMinutes()) <= 618) || ((dt.getHours()*100 + dt.getMinutes()) >= 1312)) {
+      console.log('Out of market hours!');
+      process.exit(0);
+    }
+
     var header = [];
     $('tr.altrows').children().each(function(i, element){
       var val = $(this).text()
+      console.log(val);
       if (val !== '')
         header.push( (val==='--') ? null :  val );
     });
+
+    if (header.length == 0) {
+      console.log('User account have been timeout!');
+      process.exit(2);
+    }
 
     var realtime = header[header.length - 1].split(" ");
     realtime.pop();
     var createDate = new Date( realtime.join(" ") + " GMT-0500 (PST)" ) ;
     var timeStamp = new Date( realtime.join(" ") + " GMT-0500 (PST)" ).getTime();
 
-    console.log( {
+    var stocktick = {
       symbol : header[0],
       bid : header[1],
       ask : header[2],
@@ -89,7 +106,9 @@ requestWithEncoding(options, function(err, data) {
       volume : header[9],
       createdDate : createDate,
       timeStamp : timeStamp
-    }  );
+    };
+
+    console.log( stocktick );
 
     var lastHeader;
 
@@ -107,7 +126,7 @@ requestWithEncoding(options, function(err, data) {
 
         if (tmpDate[1] == '(Weekly)') tmpDate.splice(1, 1);
         var tmpDate2 = new Date(tmpDate[1]+ ' ' + tmpDate[2]+ ' ' + tmpDate[3]);
-        var contractDate = (tmpDate2.getFullYear() + '' + pad2(tmpDate2.getMonth()+1) + '' + pad2(tmpDate2.getDate()));
+        var contractDate = (tmpDate2.getFullYear() + '' + (tmpDate2.getMonth()+1).slice(-2) + '' + (tmpDate2.getDate()).slice(-2));
 
         var row = []
         $(this).children().each(function(i, elem) {
@@ -128,15 +147,44 @@ requestWithEncoding(options, function(err, data) {
 //          console.log( tmpData  );
           if (dataSet[key]) {
             dataSet[key][action] = tmpData[action]
+          } else {
+            dataSet[key] = tmpData;
+            endCnt++;
+
           }
-          else dataSet[key] = tmpData;
         }
       }
 
 
     });
 
-    console.log( dataSet  );
+//    console.log( dataSet  );
+
+    MongoClient.connect(_conn_mongo, function(err, db) {
+      if(err) throw err;
+
+      var stockColl = db.collection('~'+stocktick.symbol);
+      stockColl.insert(stocktick, function(err, docs) {
+        if (err)
+          console.log('ERROR: ', err);
+      });
+
+      _.map(dataSet, function(item, key) {
+        var optionColl = db.collection(item.contract);
+        optionColl.insert(item, function(err, docs) {
+          if (err)
+            console.log('ERROR: ', err);
+
+          endCnt--;
+          console.log('endCnt: ', endCnt)
+          if (endCnt <= 0)
+            db.close();
+
+          return key
+        });
+      });
+    });
+
 
   }
 })
