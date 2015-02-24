@@ -7,8 +7,7 @@ var request = require('request'),
 
 var _conn_mongo = 'mongodb://127.0.0.1:27017/optiondata',
   dataSet = {},
-  stocktick = undefined,
-  endCnt = 0;
+  stocktick = undefined;
 
 if (process.argv.length != 3) {
   console.log('%s <symbol>', process.argv[1]);
@@ -97,7 +96,7 @@ var greeksExtraction = function(action_code, callback) {
       // it only run between 6:20am and 13:10pm
       if (((dt.getHours()*100 + dt.getMinutes()) <= 618) || ((dt.getHours()*100 + dt.getMinutes()) >= 1312)) {
         console.log('Out of market hours!');
-// tku     process.exit(0);
+       process.exit(0);
       }
 
       var realtime = header[header.length - 1].split(" ");
@@ -278,7 +277,7 @@ async.waterfall([
       console.log('Error: ', err  );
       process.exit(10);
     } else {
-      endCnt = _.toArray(dataSet).length;
+      var endCnt = _.toArray(dataSet).length;
       MongoClient.connect(_conn_mongo, function(err, db) {
         if(err) throw err;
 
