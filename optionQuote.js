@@ -26,6 +26,7 @@ var options = {
   url: "https://invest.ameritrade.com/cgi-bin/apps/u/OptionChain?symbol="+process.argv[2]+"&leg=symbol&type=CP&range=ALL&expire=AL&tabid=0",
   headers: headers
 }
+// https://invest.ameritrade.com/cgi-bin/apps/u/OptionChain?pagehandler=PHAnalyticalOptionChain&source=&symbol=AAPL&type=CP&range=N&expire=20150320&strike=&action=Y
 
 var requestWithEncoding = function(options, callback) {
   var req = request.get(options);
@@ -69,17 +70,9 @@ requestWithEncoding(options, function(err, data) {
   else {
     var $ = cheerio.load(data);
 
-    var dt = new Date();
-    // it only run between 6:20am and 13:10pm
-    if (((dt.getHours()*100 + dt.getMinutes()) <= 618) || ((dt.getHours()*100 + dt.getMinutes()) >= 1312)) {
-      console.log('Out of market hours!');
-      process.exit(0);
-    }
-
     var header = [];
     $('tr.altrows').children().each(function(i, element){
       var val = $(this).text()
-      console.log(val);
       if (val !== '')
         header.push( (val==='--') ? null :  val );
     });
@@ -87,6 +80,13 @@ requestWithEncoding(options, function(err, data) {
     if (header.length == 0) {
       console.log('User account have been timeout!');
       process.exit(2);
+    }
+
+    var dt = new Date();
+    // it only run between 6:20am and 13:10pm
+    if (((dt.getHours()*100 + dt.getMinutes()) <= 618) || ((dt.getHours()*100 + dt.getMinutes()) >= 1312)) {
+      console.log('Out of market hours!');
+      process.exit(0);
     }
 
     var realtime = header[header.length - 1].split(" ");
@@ -126,8 +126,7 @@ requestWithEncoding(options, function(err, data) {
 
         if (tmpDate[1] == '(Weekly)') tmpDate.splice(1, 1);
         var tmpDate2 = new Date(tmpDate[1]+ ' ' + tmpDate[2]+ ' ' + tmpDate[3]);
-        var contractDate = (tmpDate2.getFullYear() + '' + (tmpDate2.getMonth()+1).slice(-2) + '' + (tmpDate2.getDate()).slice(-2));
-
+        var contractDate = (tmpDate2.getFullYear() + '' + ('0'+(tmpDate2.getMonth()+1)).slice(-2) + '' + ('0'+(tmpDate2.getDate())).slice(-2));
         var row = []
         $(this).children().each(function(i, elem) {
           var val = $(this).text()
