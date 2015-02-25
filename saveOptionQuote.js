@@ -1,22 +1,29 @@
 var async = require('async'),
   _ = require('underscore');
 
-var oQuote = require('./lib/optionQuote');
-
-//_.map(['AAPL','$SPX.X','UVXY','SVXY'], function(item){
+ async.eachSeries(['AAPL','$SPX.X','UVXY','SVXY','V','SPXL','SPLS'], function(item, ecb) {
+   var oQuote = require('./lib/optionQuote');
+   oQuote.optionQuote(item, function() {
+   ecb();
+   });
+ }, function(err) {
+ if (err)
+ console.log(err);
+ });
 
 /*
-_.map(['AAPL'], function(item){
-  return oQuote.optionQuote(item);
-});
+ var savethem = function(item, ecb) {
+ var oQuote = require('./lib/optionQuote');
+ oQuote.optionQuote(item, function () {
+ return ecb(null);
+ });
+ };
 
-*/
+ async.map(['AAPL','$SPX.X','UVXY','SVXY','V','SPXL','SPLS']
+ , savethem
+ , function(err) {
+ if (err)
+ console.log(err);
+ });
+ */
 
-async.eachSeries(['AAPL','FB'], function(item, ecb) {
-  oQuote.optionQuote(item, function() {
-    ecb();
-  });
-}, function(err) {
-  if (err)
-    console.log(err);
-});
