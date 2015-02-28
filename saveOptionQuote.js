@@ -1,7 +1,7 @@
 var async = require('async'),
   _ = require('underscore');
 
- async.eachSeries(['AAPL','$SPX.X','UVXY','SVXY','V','SPXL','SPLS'], function(item, ecb) {
+ async.eachSeries(['UVXY','SVXY','SPY','SPXL','SPLS','$SPX.X'], function(item, ecb) {
    var oQuote = require('./lib/optionQuote');
    oQuote.optionQuote(item, function() {
    ecb();

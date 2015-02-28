@@ -9,6 +9,7 @@
   "dependencies": {
     "async": "latest",
     "cheerio": "^0.18.0",
+    "config-shield": "^0.1.5",
     "moment": "latest",
     "mongodb": "latest",
     "node-xml2json": "latest",
